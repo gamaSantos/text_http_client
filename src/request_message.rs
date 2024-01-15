@@ -6,16 +6,11 @@ use crate::request_error::RequestError;
 
 #[derive(Deserialize)]
 pub struct RequestMessage {
-    header: Option<RequestHeader>,
+    headers: Option<HashMap<String, String>>,
     body: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub struct RequestHeader {
     method: Option<String>,
     host: Option<String>,
     path: Option<String>,
-    headers: Option<HashMap<String, String>>,
 }
 
 impl RequestMessage {
@@ -43,16 +38,29 @@ fn from_text_should_return_parser_error_when_text_is_not_toml() {
 }
 
 #[test]
-fn from_text_should_parse_body() {
-    let input = "body = 'test body'";
-    let maybe_message = RequestMessage::from_text(input);
-    assert!(maybe_message.is_ok_and(|x| x.body.is_some_and(|h| h == "test body".to_string())));
-}
+fn from_text_should_parse_values() {
+    let input = r#"
+        method = "GET"
+        host = "http://localhost:5000"
+        path = "/"
+        body = '{"fake_json":"value"}'
+        
+        [headers]
+        accept = "application/json"
+        authorization = "simple_token"
 
-
-#[test]
-fn from_text_should_parse_header() {
-    let input = "body = 'test body'";
+        "#;
     let maybe_message = RequestMessage::from_text(input);
-    assert!(maybe_message.is_ok_and(|x| x.body.is_some_and(|h| h == "test body".to_string())));
+    assert!(maybe_message.is_ok());
+
+    let message = maybe_message.unwrap();
+    assert!(message.method.is_some_and(|x| x == "GET"));
+    assert!(message.host.is_some_and(|x| x == "http://localhost:5000"));
+    assert!(message.path.is_some_and(|x| x == "/"));
+    assert!(message.body.is_some_and(|x| x == r#"{"fake_json":"value"}"#));
+    
+    assert!(message
+        .headers
+        .is_some_and(|h| h.contains_key("authorization")));
+
 }
