@@ -4,13 +4,13 @@ use serde::Deserialize;
 
 use crate::request_error::RequestError;
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct RequestMessage {
-    headers: Option<HashMap<String, String>>,
-    body: Option<String>,
-    method: Option<String>,
-    host: Option<String>,
-    path: Option<String>,
+    pub method: Option<String>,
+    pub host: Option<String>,
+    pub path: Option<String>,
+    pub body: Option<String>,
+    pub headers: Option<HashMap<String, String>>,
 }
 
 impl RequestMessage {
@@ -22,6 +22,37 @@ impl RequestMessage {
                 message: e.message().to_string(),
             };
         });
+    }
+
+    pub fn merge_with(&self, new_message: RequestMessage) -> RequestMessage {
+        fn increment_header(
+            opt_headers: Option<HashMap<String, String>>,
+            mut target_headers: HashMap<String, String>,
+        ) -> HashMap<String, String> {
+            if let Some(cur_headers) = opt_headers {
+                for (k, v) in cur_headers {
+                    target_headers.insert(k, v);
+                }
+            }
+            return target_headers;
+        }
+
+        let method = new_message.method.or(self.method.clone());
+        let host = new_message.host.or(self.host.clone());
+        let path = new_message.path.or(self.path.clone());
+        let body = new_message.body.or(self.body.clone());
+
+        let copied_values = increment_header(self.headers.clone(), HashMap::new());
+        let incremented = increment_header(new_message.headers, copied_values);
+
+        let headers = Some(incremented);
+        return RequestMessage {
+            method,
+            host,
+            path,
+            body,
+            headers,
+        };
     }
 }
 
@@ -57,10 +88,85 @@ fn from_text_should_parse_values() {
     assert!(message.method.is_some_and(|x| x == "GET"));
     assert!(message.host.is_some_and(|x| x == "http://localhost:5000"));
     assert!(message.path.is_some_and(|x| x == "/"));
-    assert!(message.body.is_some_and(|x| x == r#"{"fake_json":"value"}"#));
-    
+    assert!(message
+        .body
+        .is_some_and(|x| x == r#"{"fake_json":"value"}"#));
+
     assert!(message
         .headers
         .is_some_and(|h| h.contains_key("authorization")));
+}
 
+#[test]
+fn increment_should_replace_value() {
+    let input_a = r#"
+        method = "GET"
+        host = "http://localhost:5000"
+        "#;
+    let inptu_b = r#"
+    method = "POST"
+    "#;
+    let message_a =
+        RequestMessage::from_text(input_a).expect("sample message should have been parsed");
+    let message_b =
+        RequestMessage::from_text(inptu_b).expect("sample message should have been parsed");
+
+    let merged_message = message_a.merge_with(message_b);
+    assert!(merged_message.method.is_some_and(|x| x == "POST"))
+}
+
+#[test]
+fn increment_should_add_value() {
+    let input_a = r#"
+        method = "GET"
+        host = "http://localhost:5000"
+        
+        [headers]
+        accept = "application/json"
+        "#;
+    let inptu_b = r#"
+    path = "/resource"
+
+    [headers]
+    authorization = "simple_token"
+    "#;
+    let message_a =
+        RequestMessage::from_text(input_a).expect("sample message should have been parsed");
+    let message_b =
+        RequestMessage::from_text(inptu_b).expect("sample message should have been parsed");
+
+    let merged_message: RequestMessage = message_a.merge_with(message_b);
+    assert!(merged_message.path.is_some_and(|x| x == "/resource"));
+
+    assert!(merged_message
+        .headers
+        .is_some_and(|h| h.contains_key("authorization")));
+}
+
+#[test]
+fn increment_should_not_erase_original_headers_when_not_replaced() {
+    let input_a = r#"
+        method = "GET"
+        host = "http://localhost:5000"
+        
+        [headers]
+        accept = "application/json"
+        "#;
+    let inptu_b = r#"
+    path = "/resource"
+
+    [headers]
+    authorization = "simple_token"
+    "#;
+    let message_a =
+        RequestMessage::from_text(input_a).expect("sample message should have been parsed");
+    let message_b =
+        RequestMessage::from_text(inptu_b).expect("sample message should have been parsed");
+
+    let merged_message: RequestMessage = message_a.merge_with(message_b);
+    assert!(merged_message.path.is_some_and(|x| x == "/resource"));
+
+    assert!(merged_message
+        .headers
+        .is_some_and(|h| h.contains_key("accept")));
 }

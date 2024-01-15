@@ -21,7 +21,11 @@ fn main() {
     let result = read_file_result.and_then(create_request_message);
 
     match result {
-        Ok(_) => println!("parsed message"),
+        Ok(_) => {
+            
+            println!("parsed message")
+        }
+            ,
         Err(e) => println!("{e}"),
     }
 }
