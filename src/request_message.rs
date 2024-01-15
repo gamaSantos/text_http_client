@@ -1,7 +1,8 @@
-use std::{collections::HashMap, fmt, fs, path::Path};
+use std::collections::HashMap;
 
-use clap::Error;
 use serde::Deserialize;
+
+use crate::request_error::RequestError;
 
 #[derive(Deserialize)]
 pub struct RequestMessage {
@@ -18,56 +19,40 @@ pub struct RequestHeader {
 }
 
 impl RequestMessage {
-    pub fn from_file(file_path: &str) -> Result<RequestMessage, RequestMessageParseError> {
-        let file_path = Path::new(file_path);
-        if file_path.exists() == false {
-            return Err(RequestMessageParseError::FileNotFound);
-        }
-        let read_file_result = fs::read_to_string(file_path);
-
-        let file_text = match read_file_result {
-            Ok(t) => t,
-            Err(_) => return Err(RequestMessageParseError::CouldNotReadFile),
-        };
-
+    pub fn from_text(file_text: &str) -> Result<RequestMessage, RequestError> {
         let parsed = toml::from_str::<RequestMessage>(&file_text);
 
-        return parsed.map_err(|e| -> RequestMessageParseError {
-            return RequestMessageParseError::TomlParserError {
+        return parsed.map_err(|e| -> RequestError {
+            return RequestError::TomlParserError {
                 message: e.message().to_string(),
             };
         });
     }
 }
-#[derive(Debug)]
-pub enum RequestMessageParseError {
-    FileNotFound,
-    CouldNotReadFile,
-    TomlParserError { message: String },
-}
-
-impl fmt::Display for RequestMessageParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            RequestMessageParseError::FileNotFound => write!(f, "file not found"),
-            RequestMessageParseError::CouldNotReadFile => write!(f, "could not read the file"),
-            RequestMessageParseError::TomlParserError { message: _ } => {
-                write!(f, "could not parse the file")
-            }
-        }
-    }
-}
-
-impl std::error::Error for RequestMessageParseError {}
 
 #[test]
-fn from_file_should_return_file_not_found_when_file_does_not_exist() {
-    let invalid_path = "./replaca_with_random/new_guid.toml";
-    let maybe_message = RequestMessage::from_file(invalid_path);
+fn from_text_should_return_parser_error_when_text_is_not_toml() {
+    let input = "invalid toml";
+    let maybe_message = RequestMessage::from_text(input);
     assert!(maybe_message.is_err());
 
     match maybe_message {
         Ok(_) => panic!("should never be executed?"),
-        Err(e) => assert!(matches!(e, RequestMessageParseError::FileNotFound)),
+        Err(e) => assert!(matches!(e, RequestError::TomlParserError { message: _ })),
     };
+}
+
+#[test]
+fn from_text_should_parse_body() {
+    let input = "body = 'test body'";
+    let maybe_message = RequestMessage::from_text(input);
+    assert!(maybe_message.is_ok_and(|x| x.body.is_some_and(|h| h == "test body".to_string())));
+}
+
+
+#[test]
+fn from_text_should_parse_header() {
+    let input = "body = 'test body'";
+    let maybe_message = RequestMessage::from_text(input);
+    assert!(maybe_message.is_ok_and(|x| x.body.is_some_and(|h| h == "test body".to_string())));
 }
