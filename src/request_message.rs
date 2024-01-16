@@ -60,12 +60,12 @@ impl RequestMessage {
 fn from_text_should_return_parser_error_when_text_is_not_toml() {
     let input = "invalid toml";
     let maybe_message = RequestMessage::from_text(input);
-    assert!(maybe_message.is_err());
+    assert!(maybe_message.is_err_and(|e| matches!(e, RequestError::TomlParserError { message: _ })));
 
-    match maybe_message {
-        Ok(_) => panic!("should never be executed?"),
-        Err(e) => assert!(matches!(e, RequestError::TomlParserError { message: _ })),
-    };
+    // match maybe_message {
+    //     Ok(_) => panic!("should never be executed?"),
+    //     Err(e) => assert!(matches!(e, RequestError::TomlParserError { message: _ })),
+    // };
 }
 
 #[test]
