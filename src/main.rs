@@ -8,6 +8,7 @@ use request_message::{RequestMessage, RequestMessageBuilder};
 mod http_client;
 mod request_error;
 mod request_message;
+mod response_message;
 
 #[derive(Parser)]
 #[command(name = "Text Http Client")]
