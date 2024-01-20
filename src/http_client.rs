@@ -1,7 +1,7 @@
 use std::time::Instant;
 
-use crate::{request_error::RequestError, request_message::RequestMessage};
 use crate::response_message::ResponseMessage;
+use crate::{request_error::RequestError, request_message::RequestMessage};
 
 pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, RequestError> {
     let mut request = match request_message.method {
@@ -37,11 +37,21 @@ pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, Re
             let status = response.status() as u16;
             let time = started_at.elapsed().as_millis();
             let body_read = response.body_string().await;
+            let mut headers = Vec::new();
+
+            for header_name in response.header_names() {
+                let maybe_value = response.header(header_name);
+                if let Some(value) = maybe_value {
+                    headers.push(format!("{}: {}", header_name, value))
+                }
+            }
+
             return match body_read {
                 Ok(body) => Ok(ResponseMessage {
                     status,
                     time_in_ms: time,
                     body,
+                    headers
                 }),
                 Err(inner) => Err(RequestError::HttpError { inner }),
             };
