@@ -14,7 +14,7 @@ impl Display for ResponseMessage {
         let color_code = match self.status {
             0..=299 => "32",
             300..=399 => "33",
-            400..=499 => "35",
+            400..=499 => "93",
             _ => "31"
         };
         writeln!(f, "\x1b[0;{}mSTATUS CODE: {}\x1b[0m", color_code, self.status)

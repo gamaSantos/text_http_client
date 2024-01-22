@@ -30,6 +30,7 @@ pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, Re
 
     let client = surf::client();
     let started_at = Instant::now();
+
     let result = client.send(request).await;
 
     return match result {

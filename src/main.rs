@@ -12,7 +12,7 @@ mod response_message;
 
 #[derive(Parser)]
 #[command(name = "Text Http Client")]
-#[command(version = "0.2")]
+#[command(version = "0.2.1")]
 #[command(about = "Send an http request described in a toml file", long_about = None)]
 struct Cli {
     file_path: String,
