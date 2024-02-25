@@ -1,7 +1,7 @@
 use std::{env, fs};
 
 use async_std::task;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use request_error::RequestError;
 use request_message::{RequestMessage, RequestMessageBuilder};
 
@@ -15,9 +15,26 @@ mod response_message;
 #[command(version = "0.2.1")]
 #[command(about = "Send an http request described in a toml file", long_about = None)]
 struct Cli {
+    //toml file path with the arguments
     file_path: String,
+
+    //base toml file that will be merged with the main file
     #[arg(short, long, default_value = "environment.toml")]
     base_file_path: Option<String>,
+
+    //level of information that will be printed
+    #[arg(long, default_value = "normal")]
+    verbosity: Option<Verbosity>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum Verbosity {
+    //only the response body
+    Minimal,
+    //response headers, body and time it took to finish
+    Normal,
+    //parsed request and all info from the other levels.
+    Detailed,
 }
 
 fn main() {
@@ -33,7 +50,10 @@ fn main() {
             println!("no base file");
             return Ok(rmb);
         })
-        .and_then(|rmb| rmb.to_message())
+        .and_then(|rmb| {
+            let message = rmb.to_message();
+            message
+        })
         .and_then(|message| task::block_on(http_client::send(message)));
 
     match result {

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use serde::Deserialize;
 
@@ -39,6 +39,12 @@ impl RequestMessage {
                 message: e.message().to_string(),
             };
         });
+    }
+}
+
+impl Display for RequestMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
     }
 }
 

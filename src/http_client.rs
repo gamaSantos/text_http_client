@@ -4,6 +4,7 @@ use crate::response_message::ResponseMessage;
 use crate::{request_error::RequestError, request_message::RequestMessage};
 
 pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, RequestError> {
+    println!("{}", request_message);
     let mut request = match request_message.method {
         crate::request_message::HttpVerb::GET => surf::get(request_message.url).build(),
         crate::request_message::HttpVerb::HEAD => surf::head(request_message.url).build(),
@@ -52,7 +53,7 @@ pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, Re
                     status,
                     time_in_ms: time,
                     body,
-                    headers
+                    headers,
                 }),
                 Err(inner) => Err(RequestError::HttpError { inner }),
             };
