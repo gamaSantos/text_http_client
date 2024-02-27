@@ -14,7 +14,7 @@ mod response_message;
 
 #[derive(Parser)]
 #[command(name = "Text Http Client")]
-#[command(version = "0.2.1")]
+#[command(version = "0.2.2")]
 #[command(about = "Send an http request described in a toml file", long_about = None)]
 struct Cli {
     //toml file path with the arguments
@@ -53,7 +53,7 @@ fn main() {
 
     match result {
         Ok(message) => {
-            logger::log(&message, Verbosity::Normal);
+            logger::log(&message, Verbosity::Minimal);
         }
         Err(e) => println!("{e}"),
     }

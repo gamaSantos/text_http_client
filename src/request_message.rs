@@ -14,6 +14,20 @@ pub enum HttpVerb {
     PATCH,
 }
 
+impl Display for HttpVerb {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            HttpVerb::GET => write!(f, "GET"),
+            HttpVerb::HEAD => write!(f, "HEAD"),
+            HttpVerb::POST => write!(f, "POST"),
+            HttpVerb::PUT => write!(f, "PUT"),
+            HttpVerb::DELETE => write!(f, "DELETE"),
+            HttpVerb::OPTIONS => write!(f, "OPTIONS"),
+            HttpVerb::PATCH => write!(f, "PATCH"),
+        }
+    }
+}
+
 pub struct RequestMessage {
     pub method: HttpVerb,
     pub url: String,
@@ -44,7 +58,13 @@ impl RequestMessage {
 
 impl Display for RequestMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        writeln!(f, "method: {}", self.method)?;
+        writeln!(f, "url: {}", self.url)?;
+        for kv in &self.headers {
+            writeln!(f, "{0},{1}", kv.1, kv.1)?;
+        }
+        writeln!(f, "\nbody: {}", self.body)?;
+        Ok(())
     }
 }
 
