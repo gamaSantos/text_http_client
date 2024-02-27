@@ -1,11 +1,13 @@
 use std::{env, fs};
 
 use async_std::task;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
+use logger::Verbosity;
 use request_error::RequestError;
 use request_message::{RequestMessage, RequestMessageBuilder};
 
 mod http_client;
+mod logger;
 mod request_error;
 mod request_message;
 mod response_message;
@@ -27,27 +29,20 @@ struct Cli {
     verbosity: Option<Verbosity>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum Verbosity {
-    //only the response body
-    Minimal,
-    //response headers, body and time it took to finish
-    Normal,
-    //parsed request and all info from the other levels.
-    Detailed,
-}
-
 fn main() {
     let cli = Cli::parse();
     let base_builder = read_base_file(cli.base_file_path);
     let read_file_result = read_file(&cli.file_path);
+    if let Some(level) = cli.verbosity {
+        crate::logger::init(level);
+    }
     let result = read_file_result
         .and_then(|toml_text| RequestMessage::from_text(&toml_text))
         .and_then(|rmb| {
             if let Some(base) = base_builder {
                 return Ok(base.merge_with(rmb));
             }
-            println!("no base file");
+            logger::log_msg("could not parse base file", Verbosity::Normal);
             return Ok(rmb);
         })
         .and_then(|rmb| {
@@ -58,7 +53,7 @@ fn main() {
 
     match result {
         Ok(message) => {
-            println!("{message}");
+            logger::log(&message, Verbosity::Normal);
         }
         Err(e) => println!("{e}"),
     }

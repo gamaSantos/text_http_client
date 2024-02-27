@@ -1,10 +1,11 @@
 use std::time::Instant;
 
+use crate::logger;
 use crate::response_message::ResponseMessage;
 use crate::{request_error::RequestError, request_message::RequestMessage};
 
 pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, RequestError> {
-    println!("{}", request_message);
+    logger::log(&request_message, logger::Verbosity::Detailed);
     let mut request = match request_message.method {
         crate::request_message::HttpVerb::GET => surf::get(request_message.url).build(),
         crate::request_message::HttpVerb::HEAD => surf::head(request_message.url).build(),
