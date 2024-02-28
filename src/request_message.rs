@@ -61,7 +61,7 @@ impl Display for RequestMessage {
         writeln!(f, "method: {}", self.method)?;
         writeln!(f, "url: {}", self.url)?;
         for kv in &self.headers {
-            writeln!(f, "{0},{1}", kv.1, kv.1)?;
+            writeln!(f, "{0}:{1}", kv.0, kv.1)?;
         }
         writeln!(f, "\nbody: {}", self.body)?;
         Ok(())

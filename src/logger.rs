@@ -46,13 +46,13 @@ pub fn log_msg(message: &str, level: Verbosity) {
 
 impl Logger {
     fn log(&self, message: &impl Display, level: Verbosity) {
-        if level >= self.min_lvl {
+        if self.min_lvl >= level {
             println!("{message}");
         }
     }
 
     fn log_msg(&self, msg: &str, level: Verbosity) {
-        if level >= self.min_lvl {
+        if self.min_lvl >= level {
             println!("{msg}");
         }
     }
