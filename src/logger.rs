@@ -29,18 +29,14 @@ fn get_instance() -> Option<&'static Logger> {
 }
 
 pub fn log(message: &impl Display, level: Verbosity) {
-    let logger = get_instance();
-    match logger {
-        Some(l) => l.log(message, level),
-        None => (),
+    if let Some(logger) = get_instance() {
+        logger.log(message, level);
     }
 }
 
 pub fn log_msg(message: &str, level: Verbosity) {
-    let logger = get_instance();
-    match logger {
-        Some(l) => l.log_msg(message, level),
-        None => (),
+    if let Some(logger) = get_instance() {
+        logger.log_msg(message, level);
     }
 }
 

@@ -7,19 +7,19 @@ use crate::{request_error::RequestError, request_message::RequestMessage};
 pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, RequestError> {
     logger::log(&request_message, logger::Verbosity::Detailed);
     let mut request = match request_message.method {
-        crate::request_message::HttpVerb::GET => surf::get(request_message.url).build(),
-        crate::request_message::HttpVerb::HEAD => surf::head(request_message.url).build(),
-        crate::request_message::HttpVerb::POST => surf::post(request_message.url)
+        crate::request_message::HttpVerb::Get => surf::get(request_message.url).build(),
+        crate::request_message::HttpVerb::Head => surf::head(request_message.url).build(),
+        crate::request_message::HttpVerb::Post => surf::post(request_message.url)
             .body_string(request_message.body)
             .build(),
-        crate::request_message::HttpVerb::PUT => surf::put(request_message.url)
+        crate::request_message::HttpVerb::Put => surf::put(request_message.url)
             .body_string(request_message.body)
             .build(),
-        crate::request_message::HttpVerb::DELETE => surf::delete(request_message.url)
+        crate::request_message::HttpVerb::Delete => surf::delete(request_message.url)
             .body_string(request_message.body)
             .build(),
-        crate::request_message::HttpVerb::OPTIONS => surf::options(request_message.url).build(),
-        crate::request_message::HttpVerb::PATCH => surf::patch(request_message.url)
+        crate::request_message::HttpVerb::Options => surf::options(request_message.url).build(),
+        crate::request_message::HttpVerb::Patch => surf::patch(request_message.url)
             .body_string(request_message.body)
             .build(),
     };
@@ -35,7 +35,7 @@ pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, Re
 
     let result = client.send(request).await;
 
-    return match result {
+    match result {
         Ok(mut response) => {
             let status = response.status() as u16;
             let time = started_at.elapsed().as_millis();
@@ -49,7 +49,7 @@ pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, Re
                 }
             }
 
-            return match body_read {
+            match body_read {
                 Ok(body) => Ok(ResponseMessage {
                     status,
                     time_in_ms: time,
@@ -57,8 +57,8 @@ pub async fn send(request_message: RequestMessage) -> Result<ResponseMessage, Re
                     headers,
                 }),
                 Err(inner) => Err(RequestError::HttpError { inner }),
-            };
+            }
         }
         Err(inner) => Err(RequestError::HttpError { inner }),
-    };
+    }
 }

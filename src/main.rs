@@ -38,17 +38,14 @@ fn main() {
     }
     let result = read_file_result
         .and_then(|toml_text| RequestMessage::from_text(&toml_text))
-        .and_then(|rmb| {
+        .map(|rmb| {
             if let Some(base) = base_builder {
-                return Ok(base.merge_with(rmb));
+                return base.merge_with(rmb);
             }
             logger::log_msg("could not parse base file", Verbosity::Normal);
-            return Ok(rmb);
+            rmb
         })
-        .and_then(|rmb| {
-            let message = rmb.to_message();
-            message
-        })
+        .and_then(|rmb| rmb.into_message())
         .and_then(|message| task::block_on(http_client::send(message)));
 
     match result {
@@ -72,13 +69,13 @@ fn read_base_file(path: Option<String>) -> Option<RequestMessageBuilder> {
             Err(_) => None,
         };
     }
-    return None;
+    None
 }
 
 fn read_file(file_path: &str) -> Result<String, RequestError> {
     let result = fs::read_to_string(file_path);
-    return match result {
+    match result {
         Ok(value) => Ok(value),
         Err(_) => Err(RequestError::CouldNotReadFile),
-    };
+    }
 }

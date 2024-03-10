@@ -5,25 +5,25 @@ use serde::Deserialize;
 use crate::request_error::RequestError;
 
 pub enum HttpVerb {
-    GET,
-    HEAD,
-    POST,
-    PUT,
-    DELETE,
-    OPTIONS,
-    PATCH,
+    Get,
+    Head,
+    Post,
+    Put,
+    Delete,
+    Options,
+    Patch,
 }
 
 impl Display for HttpVerb {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            HttpVerb::GET => write!(f, "GET"),
-            HttpVerb::HEAD => write!(f, "HEAD"),
-            HttpVerb::POST => write!(f, "POST"),
-            HttpVerb::PUT => write!(f, "PUT"),
-            HttpVerb::DELETE => write!(f, "DELETE"),
-            HttpVerb::OPTIONS => write!(f, "OPTIONS"),
-            HttpVerb::PATCH => write!(f, "PATCH"),
+            HttpVerb::Get => write!(f, "GET"),
+            HttpVerb::Head => write!(f, "HEAD"),
+            HttpVerb::Post => write!(f, "POST"),
+            HttpVerb::Put => write!(f, "PUT"),
+            HttpVerb::Delete => write!(f, "DELETE"),
+            HttpVerb::Options => write!(f, "OPTIONS"),
+            HttpVerb::Patch => write!(f, "PATCH"),
         }
     }
 }
@@ -46,7 +46,7 @@ pub struct RequestMessageBuilder {
 
 impl RequestMessage {
     pub fn from_text(file_text: &str) -> Result<RequestMessageBuilder, RequestError> {
-        let parsed = toml::from_str::<RequestMessageBuilder>(&file_text);
+        let parsed = toml::from_str::<RequestMessageBuilder>(file_text);
 
         return parsed.map_err(|e| -> RequestError {
             return RequestError::TomlParserError {
@@ -79,7 +79,7 @@ impl RequestMessageBuilder {
                     target_headers.insert(k, v);
                 }
             }
-            return target_headers;
+            target_headers
         }
 
         let method = new_message.method.or(self.method.clone());
@@ -91,16 +91,16 @@ impl RequestMessageBuilder {
         let incremented = increment_header(new_message.headers, copied_values);
 
         let headers = Some(incremented);
-        return RequestMessageBuilder {
+        RequestMessageBuilder {
             method,
             host,
             path,
             body,
             headers,
-        };
+        }
     }
 
-    pub fn to_message(self) -> Result<RequestMessage, RequestError> {
+    pub fn into_message(self) -> Result<RequestMessage, RequestError> {
         let host = match self.host {
             Some(x) => x,
             None => {
@@ -131,19 +131,19 @@ impl RequestMessageBuilder {
             method: parse_method(method_candidate),
             url: host + &path,
             body: self.body.unwrap_or("".to_string()),
-            headers: self.headers.unwrap_or(HashMap::new()),
+            headers: self.headers.unwrap_or_default(),
         });
 
         fn parse_method(candidate: String) -> HttpVerb {
             match candidate.to_uppercase().as_str() {
-                "GET" => HttpVerb::GET,
-                "HEAD" => HttpVerb::HEAD,
-                "POST" => HttpVerb::POST,
-                "PUT" => HttpVerb::PUT,
-                "DELETE" => HttpVerb::DELETE,
-                "OPTIONS" => HttpVerb::OPTIONS,
-                "PATCH" => HttpVerb::PATCH,
-                _ => HttpVerb::HEAD,
+                "GET" => HttpVerb::Get,
+                "HEAD" => HttpVerb::Head,
+                "POST" => HttpVerb::Post,
+                "PUT" => HttpVerb::Put,
+                "DELETE" => HttpVerb::Delete,
+                "OPTIONS" => HttpVerb::Options,
+                "PATCH" => HttpVerb::Patch,
+                _ => HttpVerb::Head,
             }
         }
     }
@@ -273,8 +273,8 @@ fn to_message_should_copy_values() {
 
         "#;
     let builder = RequestMessage::from_text(input).unwrap();
-    let message = builder.to_message().unwrap();
-    assert!(matches!(message.method, HttpVerb::GET));
+    let message = builder.into_message().unwrap();
+    assert!(matches!(message.method, HttpVerb::Get));
     assert_eq!(message.url, "http://localhost:5000/");
     assert_eq!(message.body, r#"{"fake_json":"value"}"#);
     assert_eq!(message.headers.len(), 2);

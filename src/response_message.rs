@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-
-
 pub struct ResponseMessage {
     pub status: u16,
     pub time_in_ms: u128,
@@ -15,15 +13,19 @@ impl Display for ResponseMessage {
             0..=299 => "32",
             300..=399 => "33",
             400..=499 => "93",
-            _ => "31"
+            _ => "31",
         };
-        writeln!(f, "\x1b[0;{}mSTATUS CODE: {}\x1b[0m", color_code, self.status)
+        writeln!(
+            f,
+            "\x1b[0;{}mSTATUS CODE: {}\x1b[0m",
+            color_code, self.status
+        )
         .and_then(|_| writeln!(f, "took: {}ms\n ", self.time_in_ms))
-        .and_then( |_| {
+        .map(|_| {
             for h in self.headers.iter() {
                 writeln!(f, "{h}").unwrap();
             }
-            Ok(())
+            ()
         })
         .and_then(|_| writeln!(f, "\n{}", self.body))
     }
