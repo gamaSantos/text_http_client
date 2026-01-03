@@ -28,7 +28,3 @@ you can omit any value, but the sum of the the base file and the executed file m
 It's algo possible to use another file as the base file with the -b flag.
 
 > thc myfile.toml -b other.toml
-
----
-
-I'm learning rust so if there is a better way of doing things, feel free to contact me.

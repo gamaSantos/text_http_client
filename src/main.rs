@@ -14,7 +14,7 @@ mod response_message;
 
 #[derive(Parser)]
 #[command(name = "Text Http Client")]
-#[command(version = "0.2.2")]
+#[command(version = "0.2.3")]
 #[command(about = "Send an http request described in a toml file", long_about = None)]
 struct Cli {
     //toml file path with the arguments
@@ -25,17 +25,15 @@ struct Cli {
     base_file_path: Option<String>,
 
     //level of information that will be printed
-    #[arg(long, default_value = "normal")]
-    verbosity: Option<Verbosity>,
+    #[arg(long, default_value = "minimal")]
+    verbosity: Verbosity,
 }
 
 fn main() {
     let cli = Cli::parse();
     let base_builder = read_base_file(cli.base_file_path);
     let read_file_result = read_file(&cli.file_path);
-    if let Some(level) = cli.verbosity {
-        crate::logger::init(level);
-    }
+    crate::logger::init(cli.verbosity);
     let result = read_file_result
         .and_then(|toml_text| RequestMessage::from_text(&toml_text))
         .map(|rmb| {
@@ -50,7 +48,11 @@ fn main() {
 
     match result {
         Ok(message) => {
-            logger::log(&message, Verbosity::Minimal);
+            if cli.verbosity == Verbosity::Minimal {
+                logger::log(&message.body, Verbosity::Minimal);
+            } else {
+                logger::log(&message, Verbosity::Normal);
+            }
         }
         Err(e) => println!("{e}"),
     }
